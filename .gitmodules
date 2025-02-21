@@ -1,3 +1,6 @@
 [submodule "ibex"]
 	path = ibex
-	url = git@github.com:lowRISC/ibex.git
+	url = git@github.com:marqs85/ibex.git
+[submodule "riscv-dbg"]
+	path = riscv-dbg
+	url = git@github.com:marqs85/riscv-dbg.git
