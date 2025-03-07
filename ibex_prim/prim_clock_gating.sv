@@ -17,12 +17,6 @@ module prim_clock_gating #(
   output logic clk_o
 );
 
-  logic en_latch /* verilator clock_enable */;
-  always_latch begin
-    if (!clk_i) begin
-      en_latch = en_i | test_en_i;
-    end
-  end
-  assign clk_o = en_latch & clk_i;
+assign clk_o = clk_i; // no gate for FPGA
 
 endmodule

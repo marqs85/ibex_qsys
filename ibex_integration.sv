@@ -125,7 +125,7 @@ ibex_top #(
     .RV32E            ( IBEX_RV32E                       ),
     .RV32M            ( ibex_pkg::RV32MSingleCycle       ),
     .RV32B            ( ibex_pkg::RV32BNone              ),
-    .RegFile          ( ibex_pkg::RegFileFPGA            ),
+    .RegFile          ( ibex_pkg::RegFileFF              ),
     //.BranchTargetALU
     //.WritebackStage
     .ICache           ( 1                                ),
@@ -138,10 +138,10 @@ ibex_top #(
     .RndCnstLfsrPerm  ( ibex_pkg::RndCnstLfsrPermDefault ),
     .DbgTriggerEn     ( 0                                ),
     //.DbgHwBreakNum
-    .DmBaseAddr       ( 32'h1A110000                     ),
+    .DmBaseAddr       ( 32'h00000000                     ),
     .DmAddrMask       ( 32'h00000FFF                     ),
-    .DmHaltAddr       ( 32'h1A110800                     ),
-    .DmExceptionAddr  ( 32'h1A110808                     )
+    .DmHaltAddr       ( 32'h00000800                     ),
+    .DmExceptionAddr  ( 32'h00000808                     )
 ) u_top (
     // Clock and reset
     .clk_i                  (clk_i),

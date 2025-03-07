@@ -85,7 +85,7 @@ add_fileset_file ibex_multdiv_fast.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_multdiv_
 add_fileset_file ibex_multdiv_slow.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_multdiv_slow.sv
 add_fileset_file ibex_pmp.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_pmp.sv
 add_fileset_file ibex_prefetch_buffer.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_prefetch_buffer.sv
-add_fileset_file ibex_register_file_fpga.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_register_file_fpga.sv
+add_fileset_file ibex_register_file_ff.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_register_file_ff.sv
 add_fileset_file ibex_wb_stage.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_wb_stage.sv
 add_fileset_file ibex_core.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_core.sv
 add_fileset_file ibex_top.sv SYSTEM_VERILOG PATH ibex/rtl/ibex_top.sv
