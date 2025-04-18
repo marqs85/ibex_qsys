@@ -30,6 +30,18 @@ module ibex_integration
     input logic [1:0]                    bus_data_resp,
     input logic                          bus_data_wrespvalid,
 
+    // Debug IF
+    output logic                         bus_debug_read,
+    input logic                          bus_debug_busy,
+    input logic                          bus_debug_rvalid,
+    output logic [31:0]                  bus_debug_addr,
+    output logic                         bus_debug_write,
+    output logic [3:0]                   bus_debug_be,
+    input logic [31:0]                   bus_debug_rdata,
+    output logic [31:0]                  bus_debug_wdata,
+    input logic [1:0]                    bus_debug_resp,
+    input logic                          bus_debug_wrespvalid,
+
     // Interrupt inputs
     //input  logic                         irq_software_i,
     //input  logic                         irq_timer_i,
@@ -51,11 +63,17 @@ module ibex_integration
 
     // System reset
     output                               ndmreset_o,
-    input                                ndmreset_ack_i
+    input                                ndmreset_ack_i,
+
+    // JTAG interface
+    input logic                          trstn_i, // Unused dummy
+    input logic                          tck_i,
+    input logic                          tms_i,
+    input logic                          tdi_i,
+    output logic                         tdo_o
 );
 
 logic dm_debug_req;
-logic reg_debug_req, reg_sleep_req;
 
 // signals from/to core
 logic         core_instr_req;
@@ -78,13 +96,22 @@ logic [31:0]  core_data_rdata;
 logic [6:0]   core_data_rdata_intg;
 logic         core_data_err;
 
+logic         debug_req;
+logic         debug_gnt;
+logic         debug_rvalid;
+logic         debug_we;
+logic [3:0]   debug_be;
+logic [31:0]  debug_addr;
+logic [31:0]  debug_wdata;
+logic [31:0]  debug_rdata;
+logic         debug_err;
+
 logic dmi_req_ready;
 dm::dmi_req_t dmi_req;
 logic dmi_req_valid;
 dm::dmi_resp_t dmi_resp;
 logic dmi_resp_valid;
 logic dmi_resp_ready;
-logic dmi_rst_req;
 
 assign bus_instr_read = core_instr_req;
 assign bus_instr_addr = core_instr_addr;
@@ -104,6 +131,17 @@ assign core_data_rvalid = bus_data_rvalid | bus_data_wrespvalid;
 assign core_data_rdata = bus_data_rdata;
 assign core_data_rdata_intg = '0;
 assign core_data_err = '0;
+
+assign bus_debug_read = debug_req & ~debug_we;
+assign bus_debug_addr = debug_addr;
+assign bus_debug_write = debug_req & debug_we;
+assign bus_debug_be = debug_be;
+assign bus_debug_wdata = debug_wdata;
+assign debug_gnt = ~bus_debug_busy & debug_req;
+assign debug_rvalid = bus_debug_rvalid | bus_debug_wrespvalid;
+assign debug_rdata = bus_debug_rdata;
+assign debug_err = '0;
+assign debug_other_err = '0;
 
 
 ibex_top #(
@@ -188,7 +226,7 @@ ibex_top #(
     .double_fault_seen_o    (),
 
     // Special control signals
-    .fetch_enable_i         (reg_sleep_req ? IbexMuBiOff : IbexMuBiOn),
+    .fetch_enable_i         (IbexMuBiOn),
     .alert_minor_o          (),
     .alert_major_internal_o (),
     .alert_major_bus_o      (),
@@ -210,8 +248,8 @@ dm_top #(
     .ndmreset_ack_i         (ndmreset_ack_i),
     .dmactive_o             (),
     .debug_req_o            (dm_debug_req),
-    .unavailable_i          (1'b0),
-    .hartinfo_i             ('0),
+    .unavailable_i          (~'1),
+    .hartinfo_i             ({8'h0, 4'h2, 3'b0, 1'b1, dm::DataCount, dm::DataAddr}),
 
     // Bus device with debug memory (for execution-based debug).
     .slave_req_i            (dm_avalon_s_write | dm_avalon_s_read),
@@ -222,19 +260,18 @@ dm_top #(
     .slave_rdata_o          (dm_avalon_s_readdata),
 
     // Bus host (for system bus accesses, SBA).
-    .master_req_o           (),
-    .master_add_o           (),
-    .master_we_o            (),
-    .master_wdata_o         (),
-    .master_be_o            (),
-    .master_gnt_i           (1'b0),
-    .master_r_valid_i       (1'b0),
-    .master_r_err_i         (1'b0),
-    .master_r_other_err_i   (1'b0),
-    .master_r_rdata_i       ('0),
+    .master_req_o           (debug_req),
+    .master_add_o           (debug_addr),
+    .master_we_o            (debug_we),
+    .master_wdata_o         (debug_wdata),
+    .master_be_o            (debug_be),
+    .master_gnt_i           (debug_gnt),
+    .master_r_valid_i       (debug_rvalid),
+    .master_r_err_i         (debug_err),
+    .master_r_other_err_i   (debug_other_err),
+    .master_r_rdata_i       (debug_rdata),
 
-    // TODO
-    .dmi_rst_ni             (~dmi_rst_req),
+    .dmi_rst_ni             (1'b1),
     .dmi_req_valid_i        (dmi_req_valid),
     .dmi_req_ready_o        (dmi_req_ready),
     .dmi_req_i              (dmi_req),
@@ -243,8 +280,19 @@ dm_top #(
     .dmi_resp_o             (dmi_resp)
 );
 
-assign dmi_rst_req = 1'b1;
-assign dmi_req_valid = 1'b0;
-assign dmi_resp_ready = 1'b0;
+dmi_intel u_dmi_intel (
+    .clk_i                  (clk_i),
+    .rst_ni                 (rst_ni),
+    .dmi_req_valid_o        (dmi_req_valid),
+    .dmi_req_ready_i        (dmi_req_ready),
+    .dmi_req_o              (dmi_req),
+    .dmi_resp_valid_i       (dmi_resp_valid),
+    .dmi_resp_ready_o       (dmi_resp_ready),
+    .dmi_resp_i             (dmi_resp),
+    .tck_i                  (tck_i),
+    .tms_i                  (tms_i),
+    .tdi_i                  (tdi_i),
+    .tdo_o                  (tdo_o)
+);
 
 endmodule
