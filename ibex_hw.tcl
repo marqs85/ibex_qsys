@@ -155,8 +155,10 @@ add_fileset_file ibex_integration.sv SYSTEM_VERILOG PATH ibex_integration.sv TOP
 #
 # parameters
 #
-add_parameter IBEX_RV32E boolean false "IBEX_RV32E"
+add_parameter IBEX_RV32E boolean true "IBEX_RV32E"
 set_parameter_property IBEX_RV32E HDL_PARAMETER true
+add_parameter IBEX_ICACHE boolean true "IBEX_ICACHE"
+set_parameter_property IBEX_ICACHE HDL_PARAMETER true
 
 
 #
@@ -190,6 +192,37 @@ set_interface_property reset_sink CMSIS_SVD_VARIABLES ""
 set_interface_property reset_sink SVD_ADDRESS_GROUP ""
 
 add_interface_port reset_sink rst_ni reset_n Input 1
+
+
+#
+# connection point po_reset_sink
+#
+add_interface po_reset_sink reset end
+set_interface_property po_reset_sink associatedClock clk_sink
+set_interface_property po_reset_sink synchronousEdges DEASSERT
+set_interface_property po_reset_sink ENABLED true
+set_interface_property po_reset_sink EXPORT_OF ""
+set_interface_property po_reset_sink PORT_NAME_MAP ""
+set_interface_property po_reset_sink CMSIS_SVD_VARIABLES ""
+set_interface_property po_reset_sink SVD_ADDRESS_GROUP ""
+
+add_interface_port po_reset_sink po_rst_ni reset_n Input 1
+
+
+#
+# connection point ndm
+#
+add_interface ndm conduit end
+set_interface_property ndm associatedClock clk_sink
+set_interface_property ndm associatedReset ""
+set_interface_property ndm ENABLED true
+set_interface_property ndm EXPORT_OF ""
+set_interface_property ndm PORT_NAME_MAP ""
+set_interface_property ndm CMSIS_SVD_VARIABLES ""
+set_interface_property ndm SVD_ADDRESS_GROUP ""
+
+add_interface_port ndm ndmreset_o ndmreset_o Output 1
+add_interface_port ndm ndmreset_ack_i ndmreset_ack_i Input 1
 
 
 #

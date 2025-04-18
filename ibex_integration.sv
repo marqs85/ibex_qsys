@@ -2,10 +2,12 @@ import ibex_pkg::*;
 
 module ibex_integration
 #(
-    parameter IBEX_RV32E        = 1
+    parameter IBEX_RV32E        = 1,
+    parameter IBEX_ICACHE       = 1
 ) (
     input  logic                         clk_i,
     input  logic                         rst_ni,
+    input  logic                         po_rst_ni,
 
     input  logic [31:0]                  boot_addr_i,
 
@@ -58,7 +60,11 @@ module ibex_integration
     output                               dbgreg_avalon_s_readdatavalid,
     output                               dbgreg_avalon_s_writeresponsevalid,
     output [1:0]                         dbgreg_avalon_s_response,
-    output                               dbgreg_avalon_s_waitrequest_n
+    output                               dbgreg_avalon_s_waitrequest_n,
+
+    // System reset
+    output                               ndmreset_o,
+    input                                ndmreset_ack_i
 );
 
 logic dm_debug_req;
@@ -128,7 +134,7 @@ ibex_top #(
     .RegFile          ( ibex_pkg::RegFileFF              ),
     //.BranchTargetALU
     //.WritebackStage
-    .ICache           ( 1                                ),
+    .ICache           ( IBEX_ICACHE                      ),
     .ICacheECC        ( 0                                ),
     .ICacheScramble   ( 0                                ),
     //.ICacheScrNumPrinceRoundsHalf
@@ -210,11 +216,11 @@ dm_top #(
     .ReadByteEnable         (1)
 ) u_dm_top (
     .clk_i                  (clk_i),
-    .rst_ni                 (rst_ni),
+    .rst_ni                 (po_rst_ni),
     .next_dm_addr_i         ('0),
     .testmode_i             (1'b0),
-    .ndmreset_o             (),     // not needed currently
-    .ndmreset_ack_i         (1'b0),
+    .ndmreset_o             (ndmreset_o),
+    .ndmreset_ack_i         (ndmreset_ack_i),
     .dmactive_o             (),
     .debug_req_o            (dm_debug_req),
     .unavailable_i          (1'b0),
