@@ -45,7 +45,7 @@ defparam
     dcfifo_component.overflow_checking = "ON",
     dcfifo_component.rdsync_delaypipe = 4,
     dcfifo_component.underflow_checking = "ON",
-    dcfifo_component.use_eab = "ON",
+    dcfifo_component.use_eab = "OFF",
     dcfifo_component.wrsync_delaypipe = 4;
 
 endmodule
